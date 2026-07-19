@@ -235,7 +235,7 @@ Settings:AddToggle({
                     local part = getChestPrimaryPart(obj)
                     if part then
                         local distance = (hrp.Position - part.Position).Magnitude
-                        data.label.Text = string.format("Chest\n%.1f studs", distance)
+                        data.label.Text = string.format("Chest", distance)
                     end
                 end
             end)
