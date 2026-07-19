@@ -29,7 +29,7 @@ local IsOpen = Subs.Wait
 	local Ect = MiscTab:CreateSection({Name = "Ect", Side = "Left"})
 
 MainSection:AddToggle({
-    Name = "Auto Pet Battle (Bật auto catch)",
+    Name = "Auto Pet Battle",
     Default = false,
     Callback = function(value)
         if not value then return end
@@ -52,10 +52,26 @@ MainSection:AddToggle({
                 return false
             end
 
+            local autoCatchText = player.PlayerGui
+                :WaitForChild("UIPrefabs")
+                :WaitForChild("BattleCatchPetWindow")
+                :WaitForChild("MainCanvasGroup")
+                :WaitForChild("BallFrame")
+                :WaitForChild("AutoCatchFrame")
+                :WaitForChild("AutoTimeText")
+
+            autoCatchText:GetPropertyChangedSignal("Text"):Connect(function()
+                local text = autoCatchText.Text
+                if text == "(3s)" or text == "(2s)" or text == "(1s)" then
+                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.C, false, game)
+                    task.wait(0.1)
+                    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.C, false, game)
+                end
+            end)
+
             while value do
                 local character = player.Character or player.CharacterAdded:Wait()
                 local rootPart = character:WaitForChild("HumanoidRootPart")
-
 
                 local foundId = nil
                 for _, obj in ipairs(cache:GetChildren()) do
@@ -82,7 +98,6 @@ MainSection:AddToggle({
                     continue
                 end
 
-
                 game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("Battle"):WaitForChild("ReqEnterPetBattle"):FireServer(foundId)
 
                 local countdownText = player.PlayerGui
@@ -93,12 +108,10 @@ MainSection:AddToggle({
                     :WaitForChild("CountdownFrame")
                     :WaitForChild("CountdownText")
 
-
                 repeat task.wait(0.1) until not value
                     or (tonumber(countdownText.Text) and tonumber(countdownText.Text) <= 29)
 
                 if not value then break end
-
 
                 local countdownActive = true
                 local conn = countdownText:GetPropertyChangedSignal("Text"):Connect(function()
@@ -107,7 +120,6 @@ MainSection:AddToggle({
                     end
                 end)
 
-   
                 while countdownActive and value do
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.One, false, game)
                     task.wait(math.random(30, 80) / 100)
@@ -115,27 +127,7 @@ MainSection:AddToggle({
                 end
                 conn:Disconnect()
 
-                if not value then break end
-
-                local autoCatchText = player.PlayerGui
-                    :WaitForChild("UIPrefabs")
-                    :WaitForChild("BattleCatchPetWindow")
-                    :WaitForChild("MainCanvasGroup")
-                    :WaitForChild("BallFrame")
-                    :WaitForChild("AutoCatchFrame")
-                    :WaitForChild("AutoTimeText")
-
-              local catchConn = autoCatchText:GetPropertyChangedSignal("Text"):Connect(function()
-				local text = autoCatchText.Text
-				if text == "(3s)" or text == "(2s)" or text == "(1s)" then
-					VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.C, false, game)
-					task.wait(0.1)
-					VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.C, false, game)
-				end
-			end)
-
-			task.wait(1)
-			catchConn:Disconnect()
+                task.wait(1)
             end
         end)
     end
@@ -352,5 +344,3 @@ SpeedAndJump:AddSlider({
         end
     end
 })
-
-
