@@ -1,0 +1,364 @@
+repeat task.wait() until game:IsLoaded()
+
+local Library = loadstring(game:GetObjects("rbxassetid://7657867786")[1].Source)()
+local Subs = Library.subs
+local IsOpen = Subs.Wait
+
+ local Window = Library:CreateWindow({
+        Name = "HackerLor",
+        Themeable = {
+            Info = "VTrungHackerLor",
+            Credit = false,
+            Background = "",
+            Visible = true
+        }
+    })
+
+	--// Main Tab \\--
+	local MainTab = Window:CreateTab({Name = "Main"})
+	local MainSection = MainTab:CreateSection({Name = "Farming"})
+	local Settings = MainTab:CreateSection({Name = "Settings"})
+	local Auto = MainTab:CreateSection({Name = "Auto", Side = "Left"})
+	local Teleports = MainTab:CreateSection({Name = "Teleports", Side = "Right"})
+
+
+
+	local MiscTab = Window:CreateTab({Name = "Misc"})
+	local MiscSection = MiscTab:CreateSection({Name = "Misc"})
+	local SpeedAndJump = MiscTab:CreateSection({Name = "Speed&Jump[P]", Side = "Right"})
+	local Ect = MiscTab:CreateSection({Name = "Ect", Side = "Left"})
+
+MainSection:AddToggle({
+    Name = "Auto Pet Battle (Bật auto catch)",
+    Default = false,
+    Callback = function(value)
+        if not value then return end
+
+        task.spawn(function()
+            local Players = game:GetService("Players")
+            local player = Players.LocalPlayer
+            local VirtualInputManager = game:GetService("VirtualInputManager")
+
+            local cache = workspace:WaitForChild("RuntimeCache")
+                :WaitForChild("RuntimeCacheServer")
+                :WaitForChild("CreatureModelCache")
+
+            local function hasPetChild(obj)
+                for _, child in ipairs(obj:GetChildren()) do
+                    if string.find(child.Name, "Pet0_") then
+                        return true
+                    end
+                end
+                return false
+            end
+
+            while value do
+                local character = player.Character or player.CharacterAdded:Wait()
+                local rootPart = character:WaitForChild("HumanoidRootPart")
+
+
+                local foundId = nil
+                for _, obj in ipairs(cache:GetChildren()) do
+                    if hasPetChild(obj) then
+                        local objPosition
+                        if obj:IsA("Model") then
+                            objPosition = obj:GetPivot().Position
+                        elseif obj:IsA("BasePart") then
+                            objPosition = obj.Position
+                        end
+
+                        if objPosition then
+                            local distance = (objPosition - rootPart.Position).Magnitude
+                            if distance <= 50 then
+                                foundId = obj.Name
+                                break
+                            end
+                        end
+                    end
+                end
+
+                if not foundId then
+                    task.wait(1)
+                    continue
+                end
+
+
+                game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("Battle"):WaitForChild("ReqEnterPetBattle"):FireServer(foundId)
+
+                local countdownText = player.PlayerGui
+                    :WaitForChild("UIPrefabs")
+                    :WaitForChild("MainBattleWindow")
+                    :WaitForChild("MainCanvasGroup")
+                    :WaitForChild("TopFrame")
+                    :WaitForChild("CountdownFrame")
+                    :WaitForChild("CountdownText")
+
+
+                repeat task.wait(0.1) until not value
+                    or (tonumber(countdownText.Text) and tonumber(countdownText.Text) <= 29)
+
+                if not value then break end
+
+
+                local countdownActive = true
+                local conn = countdownText:GetPropertyChangedSignal("Text"):Connect(function()
+                    if not tonumber(countdownText.Text) then
+                        countdownActive = false
+                    end
+                end)
+
+   
+                while countdownActive and value do
+                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.One, false, game)
+                    task.wait(math.random(30, 80) / 100)
+                    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.One, false, game)
+                end
+                conn:Disconnect()
+
+                if not value then break end
+
+                local autoCatchText = player.PlayerGui
+                    :WaitForChild("UIPrefabs")
+                    :WaitForChild("BattleCatchPetWindow")
+                    :WaitForChild("MainCanvasGroup")
+                    :WaitForChild("BallFrame")
+                    :WaitForChild("AutoCatchFrame")
+                    :WaitForChild("AutoTimeText")
+
+                local catchDone = false
+                local catchConn = autoCatchText:GetPropertyChangedSignal("Text"):Connect(function()
+                    local text = autoCatchText.Text
+                    if text == "(3s)" or text == "(2s)" or text == "(1s)" then
+                        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.C, false, game)
+                        task.wait(0.1)
+                        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.C, false, game)
+                    end
+
+                    if text == "" or text == nil then
+                        catchDone = true
+                    end
+                end)
+
+
+                repeat task.wait(0.2) until catchDone or not value
+                catchConn:Disconnect()
+
+                task.wait(1)
+            end
+        end)
+    end
+})
+
+
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+local PLACE_ID = game.PlaceId
+local currentJobId = game.JobId
+
+local function GetServers(cursor)
+    local url = "https://games.roblox.com/v1/games/" .. PLACE_ID .. "/servers/Public?limit=100&sortOrder=Asc"
+    if cursor and cursor ~= "" then
+        url = url .. "&cursor=" .. cursor
+    end
+    local ok, result = pcall(function()
+        return request({ Url = url, Method = "GET" })
+    end)
+    if not ok or not result or not result.Body then return nil end
+    local ok2, data = pcall(function()
+        return HttpService:JSONDecode(result.Body)
+    end)
+    if not ok2 or not data then return nil end
+    return data
+end
+
+MiscSection:AddButton({
+    Name = "Hop Server",
+    Callback = function()
+        local allCandidates = {}
+        local cursor = ""
+
+        repeat
+            local data = GetServers(cursor)
+            if not data or not data.data then break end
+
+            for _, server in ipairs(data.data) do
+                if server.id ~= currentJobId
+                    and type(server.playing) == "number"
+                    and type(server.maxPlayers) == "number"
+                    and server.playing <= server.maxPlayers - 2
+                    and server.playing > 0 then
+                    table.insert(allCandidates, server)
+                end
+            end
+
+            cursor = data.nextPageCursor
+        until not cursor or cursor == ""
+
+        if #allCandidates > 0 then
+            for i = #allCandidates, 2, -1 do
+                local j = math.random(1, i)
+                allCandidates[i], allCandidates[j] = allCandidates[j], allCandidates[i]
+            end
+            local chosen = allCandidates[1]
+            TeleportService:TeleportToPlaceInstance(PLACE_ID, chosen.id, Players.LocalPlayer)
+        else
+            TeleportService:Teleport(PLACE_ID, Players.LocalPlayer)
+        end
+    end
+})
+
+Ect:AddToggle({
+    Name = "Noclip",
+    Default = false,
+    Callback = function(value)
+        if value then
+            noclip()
+        else
+            clip()
+        end
+    end
+})
+
+	--// NoClip \\--
+	local antifallActive = false 
+	spawn(function()
+		game:GetService("RunService").Stepped:Connect(function()
+			if getgenv().Farm or getgenv().MoveAround or getgenv().AutoCollect or getgenv().AutoMoveEnabled then
+				for _, v in pairs(game:GetService("Players").LocalPlayer.Character:GetDescendants()) do
+					if v:IsA("BasePart") then
+						v.CanCollide = false    
+					end
+					if v:IsA("Humanoid") then
+						v:ChangeState(11)
+					end
+				end
+				if not antifallActive then  -- Check if no clip is already active
+					antifallActive = true
+					EnableAntiFall()
+				end
+			else
+				if antifallActive then
+					antifallActive = false
+					DisableAntiFall()
+				end
+			end
+		end)
+	end)
+
+
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local plr = Players.LocalPlayer
+local Character = plr.Character or plr.CharacterAdded:Wait()
+local Humanoid = Character:WaitForChild("Humanoid")
+
+
+local WalkSpeed = 50
+local JumpPower = 50
+local isEnabled = false
+
+-- Các connection để có thể disconnect
+local walkSpeedConnection
+local jumpPowerConnection
+
+-- Hàm cập nhật Humanoid mới khi respawn
+local function updateHumanoid(char)
+    Character = char
+    Humanoid = char:WaitForChild("Humanoid")
+    
+    -- Disconnect các connection cũ nếu có
+    if walkSpeedConnection then walkSpeedConnection:Disconnect() end
+    if jumpPowerConnection then jumpPowerConnection:Disconnect() end
+    
+    -- Áp dụng giá trị nếu đang bật
+    if isEnabled then
+        Humanoid.WalkSpeed = WalkSpeed
+        Humanoid.JumpPower = JumpPower
+        
+        -- Theo dõi khi WalkSpeed hoặc JumpPower bị reset
+        walkSpeedConnection = Humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+            if Humanoid.WalkSpeed ~= WalkSpeed then
+                Humanoid.WalkSpeed = WalkSpeed
+            end
+        end)
+        
+        jumpPowerConnection = Humanoid:GetPropertyChangedSignal("JumpPower"):Connect(function()
+            if Humanoid.JumpPower ~= JumpPower then
+                Humanoid.JumpPower = JumpPower
+            end
+        end)
+    end
+end
+
+plr.CharacterAdded:Connect(updateHumanoid)
+updateHumanoid(Character)
+-- Xử lý phím P để bật/tắt
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.KeyCode == Enum.KeyCode.P then
+        isEnabled = not isEnabled
+        
+        if Humanoid then
+            if isEnabled then
+                -- Bật: áp dụng speed và jump tùy chỉnh
+                Humanoid.WalkSpeed = WalkSpeed
+                Humanoid.JumpPower = JumpPower
+                
+                -- Theo dõi khi bị reset
+                walkSpeedConnection = Humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+                    if Humanoid.WalkSpeed ~= WalkSpeed then
+                        Humanoid.WalkSpeed = WalkSpeed
+                    end
+                end)
+                
+                jumpPowerConnection = Humanoid:GetPropertyChangedSignal("JumpPower"):Connect(function()
+                    if Humanoid.JumpPower ~= JumpPower then
+                        Humanoid.JumpPower = JumpPower
+                    end
+                end)
+            else
+                -- Tắt: ngắt kết nối, để hệ thống tự áp dụng giá trị mặc định
+                if walkSpeedConnection then walkSpeedConnection:Disconnect() end
+                if jumpPowerConnection then jumpPowerConnection:Disconnect() end
+
+            end
+        end
+    end
+end)
+
+-- Khi người dùng thay đổi slider
+SpeedAndJump:AddSlider({
+    Name = "WalkSpeed",
+    Value = WalkSpeed,
+    Min = 16,
+    Max = 80,
+    Flag = "WalkSpeed",
+    Textbox = true,
+    Callback = function(state)
+        WalkSpeed = state
+        if Humanoid and isEnabled then
+            Humanoid.WalkSpeed = WalkSpeed
+        end
+    end
+})
+
+SpeedAndJump:AddSlider({
+    Name = "JumpPower",
+    Value = JumpPower,
+    Min = 50,
+    Max = 80,
+    Flag = "JumpPower",
+    Textbox = true,
+    Callback = function(state)
+        JumpPower = state
+        if Humanoid and isEnabled then
+            Humanoid.JumpPower = JumpPower
+        end
+    end
+})
+
+
