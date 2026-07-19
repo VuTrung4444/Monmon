@@ -147,6 +147,120 @@ MainSection:AddToggle({
     end
 })
 
+Settings:AddToggle({
+    Name = "Chest ESP",
+    Default = false,
+    Callback = function(value)
+        if value then
+            local Players = game:GetService("Players")
+            local RunService = game:GetService("RunService")
+            local player = Players.LocalPlayer
+            local camera = workspace.CurrentCamera
+
+            local chestFolder = workspace:WaitForChild("RuntimeCache")
+                :WaitForChild("RuntimeCacheClient")
+                :WaitForChild("Chest")
+
+            getgenv().ChestESPObjects = {}
+
+            local function getChestPrimaryPart(obj)
+                for _, child in ipairs(obj:GetChildren()) do
+                    if child.Name:match("^Chest") then
+                        if child:IsA("BasePart") then
+                            return child
+                        end
+                        if child:IsA("Model") then
+                            return child.PrimaryPart or child:FindFirstChildWhichIsA("BasePart")
+                        end
+                    end
+                end
+                return obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
+            end
+
+            local function createESP(obj)
+                local billboard = Instance.new("BillboardGui")
+                billboard.Name = "ChestESP"
+                billboard.AlwaysOnTop = true
+                billboard.Size = UDim2.new(0, 150, 0, 40)
+                billboard.StudsOffset = Vector3.new(0, 3, 0)
+
+                local label = Instance.new("TextLabel")
+                label.Size = UDim2.new(1, 0, 1, 0)
+                label.BackgroundTransparency = 1
+                label.TextColor3 = Color3.fromRGB(255, 200, 0)
+                label.TextStrokeTransparency = 0
+                label.TextScaled = true
+                label.Font = Enum.Font.GothamBold
+                label.Parent = billboard
+
+                local part = getChestPrimaryPart(obj)
+                if part then
+                    billboard.Adornee = part
+                    billboard.Parent = part
+                end
+
+                getgenv().ChestESPObjects[obj] = { billboard = billboard, label = label }
+            end
+
+            local function removeESP(obj)
+                if getgenv().ChestESPObjects[obj] then
+                    getgenv().ChestESPObjects[obj].billboard:Destroy()
+                    getgenv().ChestESPObjects[obj] = nil
+                end
+            end
+
+            for _, obj in ipairs(chestFolder:GetChildren()) do
+                createESP(obj)
+            end
+
+            getgenv().ChestESPChildAdded = chestFolder.ChildAdded:Connect(function(obj)
+                createESP(obj)
+            end)
+
+            getgenv().ChestESPChildRemoved = chestFolder.ChildRemoved:Connect(function(obj)
+                removeESP(obj)
+            end)
+
+            getgenv().ChestESPRender = RunService.RenderStepped:Connect(function()
+                local character = player.Character
+                local hrp = character and character:FindFirstChild("HumanoidRootPart")
+                if not hrp then return end
+
+                for obj, data in pairs(getgenv().ChestESPObjects) do
+                    if not obj.Parent then
+                        removeESP(obj)
+                        continue
+                    end
+
+                    local part = getChestPrimaryPart(obj)
+                    if part then
+                        local distance = (hrp.Position - part.Position).Magnitude
+                        data.label.Text = string.format("Chest\n%.1f studs", distance)
+                    end
+                end
+            end)
+
+        else
+            -- Dọn dẹp khi tắt toggle
+            if getgenv().ChestESPRender then
+                getgenv().ChestESPRender:Disconnect()
+            end
+            if getgenv().ChestESPChildAdded then
+                getgenv().ChestESPChildAdded:Disconnect()
+            end
+            if getgenv().ChestESPChildRemoved then
+                getgenv().ChestESPChildRemoved:Disconnect()
+            end
+            if getgenv().ChestESPObjects then
+                for _, data in pairs(getgenv().ChestESPObjects) do
+                    data.billboard:Destroy()
+                end
+                getgenv().ChestESPObjects = {}
+            end
+        end
+    end
+})
+
 local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
