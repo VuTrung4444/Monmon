@@ -32,6 +32,7 @@ MainSection:AddToggle({
     Name = "Auto Pet Battle",
     Default = false,
     Callback = function(value)
+        getgenv().AutoPetBattle = value
         if not value then return end
 
         task.spawn(function()
@@ -53,6 +54,8 @@ MainSection:AddToggle({
             end
 
             local function FindAndEnterBattle()
+                if not getgenv().AutoPetBattle then return nil end
+
                 local character = player.Character or player.CharacterAdded:Wait()
                 local rootPart = character:WaitForChild("HumanoidRootPart")
 
@@ -92,6 +95,7 @@ MainSection:AddToggle({
                 :WaitForChild("AutoTimeText")
 
             autoCatchText:GetPropertyChangedSignal("Text"):Connect(function()
+                if not getgenv().AutoPetBattle then return end
                 local text = autoCatchText.Text
                 if text == "(3s)" or text == "(2s)" or text == "(1s)" then
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.C, false, game)
@@ -102,7 +106,7 @@ MainSection:AddToggle({
                 end
             end)
 
-            while value do
+            while getgenv().AutoPetBattle do
                 local foundId = FindAndEnterBattle()
 
                 if not foundId then
@@ -118,10 +122,10 @@ MainSection:AddToggle({
                     :WaitForChild("CountdownFrame")
                     :WaitForChild("CountdownText")
 
-                repeat task.wait(0.1) until not value
+                repeat task.wait(0.1) until not getgenv().AutoPetBattle
                     or (tonumber(countdownText.Text) and tonumber(countdownText.Text) <= 29)
 
-                if not value then break end
+                if not getgenv().AutoPetBattle then break end
 
                 local countdownActive = true
                 local conn = countdownText:GetPropertyChangedSignal("Text"):Connect(function()
@@ -130,7 +134,7 @@ MainSection:AddToggle({
                     end
                 end)
 
-                while countdownActive and value do
+                while countdownActive and getgenv().AutoPetBattle do
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.One, false, game)
                     task.wait(math.random(30, 80) / 100)
                     VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.One, false, game)
@@ -142,7 +146,6 @@ MainSection:AddToggle({
         end)
     end
 })
-
 
 local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
