@@ -17,10 +17,8 @@ local IsOpen = Subs.Wait
 	--// Main Tab \\--
 	local MainTab = Window:CreateTab({Name = "Main"})
 	local MainSection = MainTab:CreateSection({Name = "Farming"})
-	local Settings = MainTab:CreateSection({Name = "Settings"})
+	local Settings = MainTab:CreateSection({Name = "Settings", Side = "Right"})
 	local Auto = MainTab:CreateSection({Name = "Auto", Side = "Left"})
-	local Teleports = MainTab:CreateSection({Name = "Teleports", Side = "Right"})
-
 
 
 	local MiscTab = Window:CreateTab({Name = "Misc"})
@@ -97,12 +95,35 @@ MainSection:AddToggle({
             autoCatchText:GetPropertyChangedSignal("Text"):Connect(function()
                 if not getgenv().AutoPetBattle then return end
                 local text = autoCatchText.Text
-                if text == "(3s)" or text == "(2s)" or text == "(1s)" then
-                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.C, false, game)
-                    task.wait(0.1)
-                    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.C, false, game)
-                    task.wait(1.5)
-                    FindAndEnterBattle()
+
+                if getgenv().Catch then
+                    -- Chế độ Catch: gọi phím E liên tục cho đến khi text không còn đếm ngược
+                    if text == "(3s)" or text == "(2s)" or text == "(1s)" then
+                        task.spawn(function()
+                            while getgenv().AutoPetBattle and getgenv().Catch do
+                                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                                task.wait(0.1)
+                                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+                                task.wait(4)
+
+                                local currentText = autoCatchText.Text
+                                if currentText ~= "(3s)" and currentText ~= "(2s)" and currentText ~= "(1s)" then
+								task.wait(4)
+                                    FindAndEnterBattle()
+                                    break
+                                end
+                            end
+                        end)
+                    end
+                else
+                    -- Chế độ thường: gọi phím C
+                    if text == "(3s)" or text == "(2s)" or text == "(1s)" then
+                        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.C, false, game)
+                        task.wait(0.1)
+                        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.C, false, game)
+                        task.wait(2)
+                        FindAndEnterBattle()
+                    end
                 end
             end)
 
@@ -146,6 +167,15 @@ MainSection:AddToggle({
         end)
     end
 })
+
+Settings:AddToggle({
+    Name = "Catch Mons",
+    Default = false,
+    Callback = function(value)
+        getgenv().Catch = value
+    end
+})
+
 
 Settings:AddToggle({
     Name = "Chest ESP",
@@ -235,7 +265,7 @@ Settings:AddToggle({
                     local part = getChestPrimaryPart(obj)
                     if part then
                         local distance = (hrp.Position - part.Position).Magnitude
-                        data.label.Text = string.format("Chest", distance)
+                        data.label.Text = string.format("Chest\n%.1f studs", distance)
                     end
                 end
             end)
@@ -261,63 +291,7 @@ Settings:AddToggle({
     end
 })
 
-local TeleportService = game:GetService("TeleportService")
-local Players = game:GetService("Players")
-local HttpService = game:GetService("HttpService")
-local PLACE_ID = game.PlaceId
-local currentJobId = game.JobId
 
-local function GetServers(cursor)
-    local url = "https://games.roblox.com/v1/games/" .. PLACE_ID .. "/servers/Public?limit=100&sortOrder=Asc"
-    if cursor and cursor ~= "" then
-        url = url .. "&cursor=" .. cursor
-    end
-    local ok, result = pcall(function()
-        return request({ Url = url, Method = "GET" })
-    end)
-    if not ok or not result or not result.Body then return nil end
-    local ok2, data = pcall(function()
-        return HttpService:JSONDecode(result.Body)
-    end)
-    if not ok2 or not data then return nil end
-    return data
-end
-
-MiscSection:AddButton({
-    Name = "Hop Server",
-    Callback = function()
-        local allCandidates = {}
-        local cursor = ""
-
-        repeat
-            local data = GetServers(cursor)
-            if not data or not data.data then break end
-
-            for _, server in ipairs(data.data) do
-                if server.id ~= currentJobId
-                    and type(server.playing) == "number"
-                    and type(server.maxPlayers) == "number"
-                    and server.playing <= server.maxPlayers - 2
-                    and server.playing > 0 then
-                    table.insert(allCandidates, server)
-                end
-            end
-
-            cursor = data.nextPageCursor
-        until not cursor or cursor == ""
-
-        if #allCandidates > 0 then
-            for i = #allCandidates, 2, -1 do
-                local j = math.random(1, i)
-                allCandidates[i], allCandidates[j] = allCandidates[j], allCandidates[i]
-            end
-            local chosen = allCandidates[1]
-            TeleportService:TeleportToPlaceInstance(PLACE_ID, chosen.id, Players.LocalPlayer)
-        else
-            TeleportService:Teleport(PLACE_ID, Players.LocalPlayer)
-        end
-    end
-})
 
 Ect:AddToggle({
     Name = "Noclip",
