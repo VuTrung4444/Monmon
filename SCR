@@ -125,25 +125,17 @@ MainSection:AddToggle({
                     :WaitForChild("AutoCatchFrame")
                     :WaitForChild("AutoTimeText")
 
-                local catchDone = false
-                local catchConn = autoCatchText:GetPropertyChangedSignal("Text"):Connect(function()
-                    local text = autoCatchText.Text
-                    if text == "(3s)" or text == "(2s)" or text == "(1s)" then
-                        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.C, false, game)
-                        task.wait(0.1)
-                        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.C, false, game)
-                    end
+              local catchConn = autoCatchText:GetPropertyChangedSignal("Text"):Connect(function()
+				local text = autoCatchText.Text
+				if text == "(3s)" or text == "(2s)" or text == "(1s)" then
+					VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.C, false, game)
+					task.wait(0.1)
+					VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.C, false, game)
+				end
+			end)
 
-                    if text == "" or text == nil then
-                        catchDone = true
-                    end
-                end)
-
-
-                repeat task.wait(0.2) until catchDone or not value
-                catchConn:Disconnect()
-
-                task.wait(1)
+			task.wait(1)
+			catchConn:Disconnect()
             end
         end)
     end
