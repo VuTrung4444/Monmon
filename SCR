@@ -29,7 +29,7 @@ local IsOpen = Subs.Wait
 	local Ect = MiscTab:CreateSection({Name = "Ect", Side = "Left"})
 
 MainSection:AddToggle({
-    Name = "Auto Pet Battle",
+    Name = "Auto Pet Battle(Bật Auto Catch)",
     Default = false,
     Callback = function(value)
         getgenv().AutoPetBattle = value
