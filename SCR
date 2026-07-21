@@ -37,6 +37,7 @@ MainSection:AddToggle({
             local Players = game:GetService("Players")
             local player = Players.LocalPlayer
             local VirtualInputManager = game:GetService("VirtualInputManager")
+local countdownActive = false
 
             local cache = workspace:WaitForChild("RuntimeCache")
                 :WaitForChild("RuntimeCacheServer")
@@ -102,12 +103,12 @@ end
                     if text == "(3s)" or text == "(2s)" or text == "(1s)" then
                         task.spawn(function()
                             while getgenv().AutoPetBattle and getgenv().Catch do
+countdownActive = false
                                 VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
                                 task.wait(0.1)
                                 VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
                                 task.wait(4)
 FindAndEnterBattle()
-print("E")
 
                                 local currentText = autoCatchText.Text
                                 if currentText ~= "(3s)" and currentText ~= "(2s)" and currentText ~= "(1s)" then
@@ -121,12 +122,12 @@ print("E")
                 else
                     -- Chế độ thường: gọi phím C
                     if text == "(3s)" or text == "(2s)" or text == "(1s)" then
+countdownActive = false
                         VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.C, false, game)
                         task.wait(0.1)
                         VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.C, false, game)
                         task.wait(2)
 FindAndEnterBattle()
-print("C")
                     end
                 end
             end)
@@ -146,7 +147,7 @@ print("C")
 
                 if not getgenv().AutoPetBattle then break end
 
-                local countdownActive = true
+                countdownActive = true
                 local conn = countdownText:GetPropertyChangedSignal("Text"):Connect(function()
                     if not tonumber(countdownText.Text) then
                         countdownActive = false
@@ -157,7 +158,6 @@ print("C")
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.One, false, game)
                     task.wait(math.random(100, 130) / 100)
                     VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.One, false, game)
-print("1")
                 end
                 conn:Disconnect()
 
