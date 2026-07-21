@@ -82,6 +82,7 @@ MainSection:AddToggle({
                 end
 
                 return foundId
+task.wait(2)
             end
 
             local autoCatchText = player.PlayerGui
