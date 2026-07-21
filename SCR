@@ -108,7 +108,6 @@ countdownActive = false
                                 task.wait(0.1)
                                 VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
                                 task.wait(4)
-FindAndEnterBattle()
 
                                 local currentText = autoCatchText.Text
                                 if currentText ~= "(3s)" and currentText ~= "(2s)" and currentText ~= "(1s)" then
@@ -124,16 +123,20 @@ FindAndEnterBattle()
                     if text == "(3s)" or text == "(2s)" or text == "(1s)" then
 countdownActive = false
                         VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.C, false, game)
-                        task.wait(0.1)
+                        task.wait(0.5)
                         VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.C, false, game)
-                        task.wait(2)
-FindAndEnterBattle()
+                        task.wait(4)
                     end
                 end
             end)
 
             while getgenv().AutoPetBattle do
+local foundId = FindAndEnterBattle()
 
+                if not foundId then
+                    task.wait(1.5)
+                    continue
+                end
                 local countdownText = player.PlayerGui
                     :WaitForChild("UIPrefabs")
                     :WaitForChild("MainBattleWindow")
