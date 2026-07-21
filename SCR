@@ -80,7 +80,7 @@ local countdownActive = false
 
                 if foundId then
                     game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("Battle"):WaitForChild("ReqEnterPetBattle"):FireServer(foundId)
-                task.wait(5)
+                task.wait(3)
 end
 
                 return foundId
@@ -107,11 +107,11 @@ end
                                 VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
                                 task.wait(0.5)
                                 VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
-                                task.wait(3)
+                                task.wait(5)
 
                                 local currentText = autoCatchText.Text
                                 if currentText ~= "(3s)" and currentText ~= "(2s)" and currentText ~= "(1s)" then
-								task.wait(0.5)
+								task.wait(1)
 countdownActive = false
 
                                     break
@@ -125,7 +125,7 @@ countdownActive = false
                         VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.C, false, game)
                         task.wait(0.5)
                         VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.C, false, game)
-                        task.wait(3)
+                        task.wait(1)
 countdownActive = false
                     end
                 end
