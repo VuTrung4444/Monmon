@@ -79,10 +79,10 @@ MainSection:AddToggle({
 
                 if foundId then
                     game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("Battle"):WaitForChild("ReqEnterPetBattle"):FireServer(foundId)
+task.wait(2)
                 end
 
                 return foundId
-task.wait(2)
             end
 
             local autoCatchText = player.PlayerGui
