@@ -79,7 +79,7 @@ MainSection:AddToggle({
 
                 if foundId then
                     game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("Battle"):WaitForChild("ReqEnterPetBattle"):FireServer(foundId)
-task.wait(2)
+task.wait(4)
                 end
 
                 return foundId
