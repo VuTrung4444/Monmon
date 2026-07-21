@@ -153,11 +153,8 @@ local foundId = FindAndEnterBattle()
 
                 countdownActive = true
                 local conn = countdownText:GetPropertyChangedSignal("Text"):Connect(function()
-                    if not tonumber(countdownText.Text) then
-                        countdownActive = false
-                    end
-                end)
-
+    countdownActive = tonumber(countdownText.Text) ~= nil
+end)
                 while countdownActive and getgenv().AutoPetBattle do
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.One, false, game)
                     task.wait(math.random(100, 130) / 100)
