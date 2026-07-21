@@ -107,11 +107,11 @@ end
                                 VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
                                 task.wait(0.5)
                                 VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
-                                task.wait(4)
+                                task.wait(3)
 
                                 local currentText = autoCatchText.Text
                                 if currentText ~= "(3s)" and currentText ~= "(2s)" and currentText ~= "(1s)" then
-								task.wait(2)
+								task.wait(0.5)
 countdownActive = false
 
                                     break
