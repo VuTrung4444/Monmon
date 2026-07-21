@@ -58,7 +58,6 @@ MainSection:AddToggle({
                 local rootPart = character:WaitForChild("HumanoidRootPart")
 
                 local foundId = nil
-local wait = false
                 for _, obj in ipairs(cache:GetChildren()) do
                     if hasPetChild(obj) then
                         local objPosition
@@ -78,9 +77,8 @@ local wait = false
                     end
                 end
 
-                if foundId and wait == false then
+                if foundId then
                     game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("Battle"):WaitForChild("ReqEnterPetBattle"):FireServer(foundId)
-wait = true
                 end
 
                 return foundId
@@ -111,7 +109,6 @@ wait = true
                                 local currentText = autoCatchText.Text
                                 if currentText ~= "(3s)" and currentText ~= "(2s)" and currentText ~= "(1s)" then
 								task.wait(4)
-                                    FindAndEnterBattle()
                                     break
                                 end
                             end
@@ -124,7 +121,6 @@ wait = true
                         task.wait(0.1)
                         VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.C, false, game)
                         task.wait(2)
-                        FindAndEnterBattle()
                     end
                 end
             end)
@@ -161,7 +157,6 @@ wait = true
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.One, false, game)
                     task.wait(math.random(30, 80) / 100)
                     VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.One, false, game)
-wait = false
                 end
                 conn:Disconnect()
 
