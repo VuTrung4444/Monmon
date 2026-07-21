@@ -58,6 +58,7 @@ MainSection:AddToggle({
                 local rootPart = character:WaitForChild("HumanoidRootPart")
 
                 local foundId = nil
+local wait = false
                 for _, obj in ipairs(cache:GetChildren()) do
                     if hasPetChild(obj) then
                         local objPosition
@@ -77,9 +78,9 @@ MainSection:AddToggle({
                     end
                 end
 
-                if foundId then
+                if foundId and wait == false then
                     game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("Battle"):WaitForChild("ReqEnterPetBattle"):FireServer(foundId)
-task.wait(4)
+wait = true
                 end
 
                 return foundId
@@ -160,6 +161,7 @@ task.wait(4)
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.One, false, game)
                     task.wait(math.random(30, 80) / 100)
                     VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.One, false, game)
+wait = false
                 end
                 conn:Disconnect()
 
