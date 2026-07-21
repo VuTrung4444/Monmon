@@ -154,7 +154,7 @@ print("C")
 
                 while countdownActive and getgenv().AutoPetBattle do
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.One, false, game)
-                    task.wait(math.random(30, 80) / 100)
+                    task.wait(math.random(100, 130) / 100)
                     VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.One, false, game)
 print("1")
                 end
