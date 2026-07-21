@@ -131,12 +131,6 @@ print("C")
             end)
 
             while getgenv().AutoPetBattle do
-                local foundId = FindAndEnterBattle()
-
-                if not foundId then
-                    task.wait(1.5)
-                    continue
-                end
 
                 local countdownText = player.PlayerGui
                     :WaitForChild("UIPrefabs")
