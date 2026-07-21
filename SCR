@@ -105,10 +105,13 @@ MainSection:AddToggle({
                                 task.wait(0.1)
                                 VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
                                 task.wait(4)
+FindAndEnterBattle()
+print("E")
 
                                 local currentText = autoCatchText.Text
                                 if currentText ~= "(3s)" and currentText ~= "(2s)" and currentText ~= "(1s)" then
 								task.wait(4)
+
                                     break
                                 end
                             end
@@ -121,6 +124,8 @@ MainSection:AddToggle({
                         task.wait(0.1)
                         VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.C, false, game)
                         task.wait(2)
+FindAndEnterBattle()
+print("C")
                     end
                 end
             end)
@@ -157,6 +162,7 @@ MainSection:AddToggle({
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.One, false, game)
                     task.wait(math.random(30, 80) / 100)
                     VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.One, false, game)
+print("1")
                 end
                 conn:Disconnect()
 
