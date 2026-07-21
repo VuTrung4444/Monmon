@@ -103,15 +103,16 @@ end
                     if text == "(3s)" or text == "(2s)" or text == "(1s)" then
                         task.spawn(function()
                             while getgenv().AutoPetBattle and getgenv().Catch do
-countdownActive = false
+
                                 VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-                                task.wait(0.1)
+                                task.wait(0.5)
                                 VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
                                 task.wait(4)
 
                                 local currentText = autoCatchText.Text
                                 if currentText ~= "(3s)" and currentText ~= "(2s)" and currentText ~= "(1s)" then
-								task.wait(4)
+								task.wait(2)
+countdownActive = false
 
                                     break
                                 end
@@ -121,11 +122,11 @@ countdownActive = false
                 else
                     -- Chế độ thường: gọi phím C
                     if text == "(3s)" or text == "(2s)" or text == "(1s)" then
-countdownActive = false
                         VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.C, false, game)
                         task.wait(0.5)
                         VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.C, false, game)
-                        task.wait(4)
+                        task.wait(3)
+countdownActive = false
                     end
                 end
             end)
