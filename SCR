@@ -79,13 +79,13 @@ MainSection:AddToggle({
 
         if foundId then
             game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("Battle"):WaitForChild("ReqEnterPetBattle"):FireServer(foundId)
-            task.wait(3)
+            task.wait(4)
         end
 
         return foundId
     end
 
-    -- Cờ RIÊNG cho việc bắt pet xong (do autoCatchText điều khiển)
+
     local catchCompleted = false
 
     local autoCatchText = player.PlayerGui
@@ -107,12 +107,12 @@ MainSection:AddToggle({
                         VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
                         task.wait(0.5)
                         VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
-                        task.wait(5)
+                        task.wait(6)
 
                         local currentText = autoCatchText.Text
                         if currentText ~= "(3s)" and currentText ~= "(2s)" and currentText ~= "(1s)" then
-                            task.wait(1)
-                            catchCompleted = true -- báo hiệu trận đã xong, không đụng vào countdown battle
+                            task.wait(2)
+                            catchCompleted = true
                             break
                         end
                     end
@@ -123,7 +123,7 @@ MainSection:AddToggle({
                 VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.C, false, game)
                 task.wait(0.5)
                 VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.C, false, game)
-                task.wait(1)
+                task.wait(2)
                 catchCompleted = true
             end
         end
@@ -137,7 +137,7 @@ MainSection:AddToggle({
             continue
         end
 
-        catchCompleted = false -- reset cho trận mới
+        catchCompleted = false
 
         local countdownText = player.PlayerGui
             :WaitForChild("UIPrefabs")
@@ -147,14 +147,14 @@ MainSection:AddToggle({
             :WaitForChild("CountdownFrame")
             :WaitForChild("CountdownText")
 
-        repeat task.wait(0.1) until not getgenv().AutoPetBattle
+        repeat task.wait(0.5) until not getgenv().AutoPetBattle
             or catchCompleted
             or (tonumber(countdownText.Text) and tonumber(countdownText.Text) <= 29)
 
         if not getgenv().AutoPetBattle then break end
-        if catchCompleted then task.wait(1) continue end -- bắt xong sớm, quay lại tìm trận mới
+        if catchCompleted then task.wait(2) continue end
 
-        -- Theo dõi thời điểm Text đổi lần cuối để làm watchdog
+
         local lastChangeTime = os.clock()
         local conn = countdownText:GetPropertyChangedSignal("Text"):Connect(function()
             lastChangeTime = os.clock()
@@ -169,17 +169,16 @@ MainSection:AddToggle({
                 task.wait(math.random(100, 130) / 100)
                 VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.One, false, game)
             else
-                -- Grace period tránh false-positive do UI đổi frame trung gian
-                task.wait(0.3)
+
+                task.wait(1)
                 num = tonumber(countdownText.Text)
                 if num then
                     lastChangeTime = os.clock()
                 else
-                    break -- xác nhận đếm ngược trận đã thật sự kết thúc
+                    break
                 end
             end
 
-            -- Watchdog 20s: không có thay đổi -> coi như kẹt, thoát để gọi lại FindAndEnterBattle
             if os.clock() - lastChangeTime >= 20 then
                 break
             end
