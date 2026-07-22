@@ -33,138 +33,162 @@ MainSection:AddToggle({
         getgenv().AutoPetBattle = value
         if not value then return end
 
-        task.spawn(function()
-            local Players = game:GetService("Players")
-            local player = Players.LocalPlayer
-            local VirtualInputManager = game:GetService("VirtualInputManager")
-local countdownActive = false
+       task.spawn(function()
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local VirtualInputManager = game:GetService("VirtualInputManager")
 
-            local cache = workspace:WaitForChild("RuntimeCache")
-                :WaitForChild("RuntimeCacheServer")
-                :WaitForChild("CreatureModelCache")
+    local cache = workspace:WaitForChild("RuntimeCache")
+        :WaitForChild("RuntimeCacheServer")
+        :WaitForChild("CreatureModelCache")
 
-            local function hasPetChild(obj)
-                for _, child in ipairs(obj:GetChildren()) do
-                    if string.find(child.Name, "Pet0_") then
-                        return true
-                    end
-                end
-                return false
+    local function hasPetChild(obj)
+        for _, child in ipairs(obj:GetChildren()) do
+            if string.find(child.Name, "Pet0_") then
+                return true
             end
+        end
+        return false
+    end
 
-            local function FindAndEnterBattle()
-                if not getgenv().AutoPetBattle then return nil end
+    local function FindAndEnterBattle()
+        if not getgenv().AutoPetBattle then return nil end
 
-                local character = player.Character or player.CharacterAdded:Wait()
-                local rootPart = character:WaitForChild("HumanoidRootPart")
+        local character = player.Character or player.CharacterAdded:Wait()
+        local rootPart = character:WaitForChild("HumanoidRootPart")
 
-                local foundId = nil
-                for _, obj in ipairs(cache:GetChildren()) do
-                    if hasPetChild(obj) then
-                        local objPosition
-                        if obj:IsA("Model") then
-                            objPosition = obj:GetPivot().Position
-                        elseif obj:IsA("BasePart") then
-                            objPosition = obj.Position
-                        end
-
-                        if objPosition then
-                            local distance = (objPosition - rootPart.Position).Magnitude
-                            if distance <= 50 then
-                                foundId = obj.Name
-                                break
-                            end
-                        end
-                    end
+        local foundId = nil
+        for _, obj in ipairs(cache:GetChildren()) do
+            if hasPetChild(obj) then
+                local objPosition
+                if obj:IsA("Model") then
+                    objPosition = obj:GetPivot().Position
+                elseif obj:IsA("BasePart") then
+                    objPosition = obj.Position
                 end
 
-                if foundId then
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("Battle"):WaitForChild("ReqEnterPetBattle"):FireServer(foundId)
-                task.wait(3)
-end
-
-                return foundId
-            end
-
-            local autoCatchText = player.PlayerGui
-                :WaitForChild("UIPrefabs")
-                :WaitForChild("BattleCatchPetWindow")
-                :WaitForChild("MainCanvasGroup")
-                :WaitForChild("BallFrame")
-                :WaitForChild("AutoCatchFrame")
-                :WaitForChild("AutoTimeText")
-
-            autoCatchText:GetPropertyChangedSignal("Text"):Connect(function()
-                if not getgenv().AutoPetBattle then return end
-                local text = autoCatchText.Text
-
-                if getgenv().Catch then
-                    -- Chế độ Catch: gọi phím E liên tục cho đến khi text không còn đếm ngược
-                    if text == "(3s)" or text == "(2s)" or text == "(1s)" then
-                        task.spawn(function()
-                            while getgenv().AutoPetBattle and getgenv().Catch do
-
-                                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-                                task.wait(0.5)
-                                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
-                                task.wait(5)
-
-                                local currentText = autoCatchText.Text
-                                if currentText ~= "(3s)" and currentText ~= "(2s)" and currentText ~= "(1s)" then
-								task.wait(1)
-countdownActive = false
-
-                                    break
-                                end
-                            end
-                        end)
+                if objPosition then
+                    local distance = (objPosition - rootPart.Position).Magnitude
+                    if distance <= 50 then
+                        foundId = obj.Name
+                        break
                     end
-                else
-                    -- Chế độ thường: gọi phím C
-                    if text == "(3s)" or text == "(2s)" or text == "(1s)" then
-                        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.C, false, game)
+                end
+            end
+        end
+
+        if foundId then
+            game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("Battle"):WaitForChild("ReqEnterPetBattle"):FireServer(foundId)
+            task.wait(3)
+        end
+
+        return foundId
+    end
+
+    -- Cờ RIÊNG cho việc bắt pet xong (do autoCatchText điều khiển)
+    local catchCompleted = false
+
+    local autoCatchText = player.PlayerGui
+        :WaitForChild("UIPrefabs")
+        :WaitForChild("BattleCatchPetWindow")
+        :WaitForChild("MainCanvasGroup")
+        :WaitForChild("BallFrame")
+        :WaitForChild("AutoCatchFrame")
+        :WaitForChild("AutoTimeText")
+
+    autoCatchText:GetPropertyChangedSignal("Text"):Connect(function()
+        if not getgenv().AutoPetBattle then return end
+        local text = autoCatchText.Text
+
+        if getgenv().Catch then
+            if text == "(3s)" or text == "(2s)" or text == "(1s)" then
+                task.spawn(function()
+                    while getgenv().AutoPetBattle and getgenv().Catch do
+                        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
                         task.wait(0.5)
-                        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.C, false, game)
-                        task.wait(1)
-countdownActive = false
+                        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+                        task.wait(5)
+
+                        local currentText = autoCatchText.Text
+                        if currentText ~= "(3s)" and currentText ~= "(2s)" and currentText ~= "(1s)" then
+                            task.wait(1)
+                            catchCompleted = true -- báo hiệu trận đã xong, không đụng vào countdown battle
+                            break
+                        end
                     end
-                end
-            end)
-
-            while getgenv().AutoPetBattle do
-local foundId = FindAndEnterBattle()
-
-                if not foundId then
-                    task.wait(1.5)
-                    continue
-                end
-                local countdownText = player.PlayerGui
-                    :WaitForChild("UIPrefabs")
-                    :WaitForChild("MainBattleWindow")
-                    :WaitForChild("MainCanvasGroup")
-                    :WaitForChild("TopFrame")
-                    :WaitForChild("CountdownFrame")
-                    :WaitForChild("CountdownText")
-
-                repeat task.wait(0.1) until not getgenv().AutoPetBattle
-                    or (tonumber(countdownText.Text) and tonumber(countdownText.Text) <= 29)
-
-                if not getgenv().AutoPetBattle then break end
-
-                countdownActive = true
-                local conn = countdownText:GetPropertyChangedSignal("Text"):Connect(function()
-    countdownActive = tonumber(countdownText.Text) ~= nil
-end)
-                while countdownActive and getgenv().AutoPetBattle do
-                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.One, false, game)
-                    task.wait(math.random(100, 130) / 100)
-                    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.One, false, game)
-                end
-                conn:Disconnect()
-
-                task.wait(1)
+                end)
             end
+        else
+            if text == "(3s)" or text == "(2s)" or text == "(1s)" then
+                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.C, false, game)
+                task.wait(0.5)
+                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.C, false, game)
+                task.wait(1)
+                catchCompleted = true
+            end
+        end
+    end)
+
+    while getgenv().AutoPetBattle do
+        local foundId = FindAndEnterBattle()
+
+        if not foundId then
+            task.wait(1.5)
+            continue
+        end
+
+        catchCompleted = false -- reset cho trận mới
+
+        local countdownText = player.PlayerGui
+            :WaitForChild("UIPrefabs")
+            :WaitForChild("MainBattleWindow")
+            :WaitForChild("MainCanvasGroup")
+            :WaitForChild("TopFrame")
+            :WaitForChild("CountdownFrame")
+            :WaitForChild("CountdownText")
+
+        repeat task.wait(0.1) until not getgenv().AutoPetBattle
+            or catchCompleted
+            or (tonumber(countdownText.Text) and tonumber(countdownText.Text) <= 29)
+
+        if not getgenv().AutoPetBattle then break end
+        if catchCompleted then task.wait(1) continue end -- bắt xong sớm, quay lại tìm trận mới
+
+        -- Theo dõi thời điểm Text đổi lần cuối để làm watchdog
+        local lastChangeTime = os.clock()
+        local conn = countdownText:GetPropertyChangedSignal("Text"):Connect(function()
+            lastChangeTime = os.clock()
         end)
+
+        while getgenv().AutoPetBattle and not catchCompleted do
+            local num = tonumber(countdownText.Text)
+
+            if num then
+                lastChangeTime = os.clock()
+                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.One, false, game)
+                task.wait(math.random(100, 130) / 100)
+                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.One, false, game)
+            else
+                -- Grace period tránh false-positive do UI đổi frame trung gian
+                task.wait(0.3)
+                num = tonumber(countdownText.Text)
+                if num then
+                    lastChangeTime = os.clock()
+                else
+                    break -- xác nhận đếm ngược trận đã thật sự kết thúc
+                end
+            end
+
+            -- Watchdog 20s: không có thay đổi -> coi như kẹt, thoát để gọi lại FindAndEnterBattle
+            if os.clock() - lastChangeTime >= 20 then
+                break
+            end
+        end
+
+        conn:Disconnect()
+        task.wait(1)
+    end
+end)
     end
 })
 
