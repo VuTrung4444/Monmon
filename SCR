@@ -18,7 +18,7 @@ local IsOpen = Subs.Wait
 	local MainTab = Window:CreateTab({Name = "Main"})
 	local MainSection = MainTab:CreateSection({Name = "Farming"})
 	local Settings = MainTab:CreateSection({Name = "Settings", Side = "Right"})
-	local Auto = MainTab:CreateSection({Name = "Auto", Side = "Left"})
+	local Boss = MainTab:CreateSection({Name = "Boss", Side = "Left"})
 
 
 	local MiscTab = Window:CreateTab({Name = "Misc"})
@@ -315,6 +315,98 @@ Settings:AddToggle({
 })
 
 
+-- Danh sách Boss: level -> {id1, id2}
+local BossList = {
+    ["15"]  = {10002, 9000002},
+    ["30"]  = {10004, 9000003},
+    ["60"]  = {10008, 9000005},
+    ["751"] = {10020, 9000014},
+    ["752"] = {10009, 9000006},
+    ["90"]  = {10011, 9000007},
+    ["105"] = {10012, 9000008},
+    ["120"] = {10014, 9000009},
+    ["135"] = {10016, 9000010},
+    ["150"] = {10017, 9000011},
+    ["165"] = {10019, 9000012},
+    ["175"] = {10021, 9000013},
+}
+
+getgenv().MonsId = "1e27039e-2e4e-4d74-b64f-9662ae7d26c6"
+getgenv().BossLevel = "30"
+getgenv().LoopInterval = 5
+getgenv().AutoNpcBattle = false
+
+
+Boss:AddTextbox({
+    Name = "Mons ID (UUID)",
+    Default = getgenv().MonsId,
+    Callback = function(value)
+        if value and value ~= "" then
+            getgenv().MonsId = value
+        end
+    end
+})
+
+-- Textbox 2: Boss level (rút gọn)
+Boss:AddTextbox({
+    Name = "Boss Lvl (vd: 751, 752)",
+    Default = getgenv().BossLevel,
+    Callback = function(value)
+        if BossList[value] then
+            getgenv().BossLevel = value
+        else
+            warn("Lvl không hợp lệ, danh sách hỗ trợ: 15,30,60,751,752,90,105,120,135,150,165,175")
+        end
+    end
+})
+
+-- Textbox 3: thời gian lặp (giây)
+Boss:AddTextbox({
+    Name = "Thời gian lặp (giây)",
+    Default = tostring(getgenv().LoopInterval),
+    Callback = function(value)
+        local n = tonumber(value)
+        if n and n > 0 then
+            getgenv().LoopInterval = n
+        else
+            warn("Thời gian không hợp lệ, phải là số > 0")
+        end
+    end
+})
+
+-- Toggle: bật/tắt auto gọi NPC Battle
+Boss:AddToggle({
+    Name = "Auto NPC Battle",
+    Default = false,
+    Callback = function(value)
+        getgenv().AutoNpcBattle = value
+        if not value then return end
+
+        task.spawn(function()
+            local Event = game:GetService("ReplicatedStorage")
+                :WaitForChild("Remote")
+                :WaitForChild("Battle")
+                :WaitForChild("ReqEnterNpcBattle")
+
+            while getgenv().AutoNpcBattle do
+                local boss = BossList[getgenv().BossLevel]
+
+                if boss and getgenv().MonsId ~= "" then
+                    local ok, err = pcall(function()
+                        Event:FireServer(boss[1], boss[2], getgenv().MonsId)
+                    end)
+                    if not ok then
+                        warn("FireServer lỗi: " .. tostring(err))
+                    end
+                else
+                    warn("Thiếu Boss Lvl hoặc Mons ID hợp lệ, bỏ qua lượt này")
+                end
+
+                task.wait(getgenv().LoopInterval)
+            end
+        end)
+    end
+})
 
 Ect:AddToggle({
     Name = "Noclip",
