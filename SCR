@@ -1,3 +1,314 @@
+repeat task.wait() until game:IsLoaded()
+
+local Library = loadstring(game:GetObjects("rbxassetid://7657867786")[1].Source)()
+local Subs = Library.subs
+local IsOpen = Subs.Wait
+
+ local Window = Library:CreateWindow({
+        Name = "HackerLor",
+        Themeable = {
+            Info = "VTrungHackerLor",
+            Credit = false,
+            Background = "",
+            Visible = true
+        }
+    })
+
+	--// Main Tab \\--
+	local MainTab = Window:CreateTab({Name = "Main"})
+	local MainSection = MainTab:CreateSection({Name = "Farming"})
+	local Settings = MainTab:CreateSection({Name = "Settings", Side = "Right"})
+	local Boss = MainTab:CreateSection({Name = "Boss", Side = "Left"})
+
+
+	local MiscTab = Window:CreateTab({Name = "Misc"})
+	local MiscSection = MiscTab:CreateSection({Name = "Misc"})
+	local SpeedAndJump = MiscTab:CreateSection({Name = "Speed&Jump[P]", Side = "Right"})
+	local Ect = MiscTab:CreateSection({Name = "Ect", Side = "Left"})
+
+MainSection:AddToggle({
+    Name = "Auto Pet Battle(Bật Auto Catch)",
+    Default = false,
+    Callback = function(value)
+        getgenv().AutoPetBattle = value
+        if not value then return end
+
+        task.spawn(function()
+            local Players = game:GetService("Players")
+            local player = Players.LocalPlayer
+            local VirtualInputManager = game:GetService("VirtualInputManager")
+
+            local cache = workspace:WaitForChild("RuntimeCache")
+                :WaitForChild("RuntimeCacheServer")
+                :WaitForChild("CreatureModelCache")
+
+            local function hasPetChild(obj)
+                for _, child in ipairs(obj:GetChildren()) do
+                    if string.find(child.Name, "Pet0_") then
+                        return true
+                    end
+                end
+                return false
+            end
+
+            local function FindAndEnterBattle()
+                if not getgenv().AutoPetBattle then return nil end
+
+                local character = player.Character or player.CharacterAdded:Wait()
+                local rootPart = character:WaitForChild("HumanoidRootPart")
+
+                local foundId = nil
+                for _, obj in ipairs(cache:GetChildren()) do
+                    if hasPetChild(obj) then
+                        local objPosition
+                        if obj:IsA("Model") then
+                            objPosition = obj:GetPivot().Position
+                        elseif obj:IsA("BasePart") then
+                            objPosition = obj.Position
+                        end
+
+                        if objPosition then
+                            local distance = (objPosition - rootPart.Position).Magnitude
+                            if distance <= 50 then
+                                foundId = obj.Name
+                                break
+                            end
+                        end
+                    end
+                end
+
+                if foundId then
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("Battle"):WaitForChild("ReqEnterPetBattle"):FireServer(foundId)
+                    task.wait(4)
+                end
+
+                return foundId
+            end
+
+            local catchCompleted = false
+
+            local lastKeyActionTime = tick()
+
+            local autoCatchText = player.PlayerGui
+                :WaitForChild("UIPrefabs")
+                :WaitForChild("BattleCatchPetWindow")
+                :WaitForChild("MainCanvasGroup")
+                :WaitForChild("BallFrame")
+                :WaitForChild("AutoCatchFrame")
+                :WaitForChild("AutoTimeText")
+
+            autoCatchText:GetPropertyChangedSignal("Text"):Connect(function()
+                if not getgenv().AutoPetBattle then return end
+                local text = autoCatchText.Text
+
+                if getgenv().Catch then
+                    if text == "(3s)" or text == "(2s)" or text == "(1s)" then
+                        task.spawn(function()
+                            while getgenv().AutoPetBattle and getgenv().Catch do
+                                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                                task.wait(0.5)
+                                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+                                lastKeyActionTime = tick()
+                                task.wait(6)
+
+                                local currentText = autoCatchText.Text
+                                if currentText ~= "(3s)" and currentText ~= "(2s)" and currentText ~= "(1s)" then
+                                    task.wait(2)
+                                    catchCompleted = true
+                                    break
+                                end
+                            end
+                        end)
+                    end
+                else
+                    if text == "(3s)" or text == "(2s)" or text == "(1s)" then
+                        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.C, false, game)
+                        task.wait(0.5)
+                        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.C, false, game)
+                        lastKeyActionTime = tick()
+                        task.wait(2)
+                        catchCompleted = true
+                    end
+                end
+            end)
+
+            while getgenv().AutoPetBattle do
+                local foundId = FindAndEnterBattle()
+
+                if not foundId then
+                    task.wait(1.5)
+                    continue
+                end
+
+                catchCompleted = false
+                lastKeyActionTime = tick()
+                local countdownText = player.PlayerGui
+                    :WaitForChild("UIPrefabs")
+                    :WaitForChild("MainBattleWindow")
+                    :WaitForChild("MainCanvasGroup")
+                    :WaitForChild("TopFrame")
+                    :WaitForChild("CountdownFrame")
+                    :WaitForChild("CountdownText")
+
+                repeat task.wait(0.5) until not getgenv().AutoPetBattle
+                    or catchCompleted
+                    or (tonumber(countdownText.Text) and tonumber(countdownText.Text) <= 29)
+
+                if not getgenv().AutoPetBattle then break end
+                if catchCompleted then task.wait(2) continue end
+
+                while getgenv().AutoPetBattle and not catchCompleted do
+                    local num = tonumber(countdownText.Text)
+
+                    if num then
+                        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.One, false, game)
+                        task.wait(math.random(150, 180) / 100)
+                        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.One, false, game)
+                    else
+                        task.wait(1)
+                        num = tonumber(countdownText.Text)
+                        if num then
+
+                        else
+                            break
+                        end
+                    end
+
+
+                    if tick() - lastKeyActionTime >= 60 then
+                        break
+                    end
+                end
+
+                task.wait(1)
+            end
+        end)
+    end
+})
+
+Settings:AddToggle({
+    Name = "Catch Mons",
+    Default = false,
+    Callback = function(value)
+        getgenv().Catch = value
+    end
+})
+
+
+Settings:AddToggle({
+    Name = "Chest ESP",
+    Default = false,
+    Callback = function(value)
+        if value then
+            local Players = game:GetService("Players")
+            local RunService = game:GetService("RunService")
+            local player = Players.LocalPlayer
+            local camera = workspace.CurrentCamera
+
+            local chestFolder = workspace:WaitForChild("RuntimeCache")
+                :WaitForChild("RuntimeCacheClient")
+                :WaitForChild("Chest")
+
+            getgenv().ChestESPObjects = {}
+
+            local function getChestPrimaryPart(obj)
+                for _, child in ipairs(obj:GetChildren()) do
+                    if child.Name:match("^Chest") then
+                        if child:IsA("BasePart") then
+                            return child
+                        end
+                        if child:IsA("Model") then
+                            return child.PrimaryPart or child:FindFirstChildWhichIsA("BasePart")
+                        end
+                    end
+                end
+                return obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
+            end
+
+            local function createESP(obj)
+                local billboard = Instance.new("BillboardGui")
+                billboard.Name = "ChestESP"
+                billboard.AlwaysOnTop = true
+                billboard.Size = UDim2.new(0, 150, 0, 40)
+                billboard.StudsOffset = Vector3.new(0, 3, 0)
+
+                local label = Instance.new("TextLabel")
+                label.Size = UDim2.new(1, 0, 1, 0)
+                label.BackgroundTransparency = 1
+                label.TextColor3 = Color3.fromRGB(255, 200, 0)
+                label.TextStrokeTransparency = 0
+                label.TextScaled = true
+                label.Font = Enum.Font.GothamBold
+                label.Parent = billboard
+
+                local part = getChestPrimaryPart(obj)
+                if part then
+                    billboard.Adornee = part
+                    billboard.Parent = part
+                end
+
+                getgenv().ChestESPObjects[obj] = { billboard = billboard, label = label }
+            end
+
+            local function removeESP(obj)
+                if getgenv().ChestESPObjects[obj] then
+                    getgenv().ChestESPObjects[obj].billboard:Destroy()
+                    getgenv().ChestESPObjects[obj] = nil
+                end
+            end
+
+            for _, obj in ipairs(chestFolder:GetChildren()) do
+                createESP(obj)
+            end
+
+            getgenv().ChestESPChildAdded = chestFolder.ChildAdded:Connect(function(obj)
+                createESP(obj)
+            end)
+
+            getgenv().ChestESPChildRemoved = chestFolder.ChildRemoved:Connect(function(obj)
+                removeESP(obj)
+            end)
+
+            getgenv().ChestESPRender = RunService.RenderStepped:Connect(function()
+                local character = player.Character
+                local hrp = character and character:FindFirstChild("HumanoidRootPart")
+                if not hrp then return end
+
+                for obj, data in pairs(getgenv().ChestESPObjects) do
+                    if not obj.Parent then
+                        removeESP(obj)
+                        continue
+                    end
+
+                    local part = getChestPrimaryPart(obj)
+                    if part then
+                        local distance = (hrp.Position - part.Position).Magnitude
+                        data.label.Text = string.format("Chest\n%.1f studs", distance)
+                    end
+                end
+            end)
+
+        else
+
+            if getgenv().ChestESPRender then
+                getgenv().ChestESPRender:Disconnect()
+            end
+            if getgenv().ChestESPChildAdded then
+                getgenv().ChestESPChildAdded:Disconnect()
+            end
+            if getgenv().ChestESPChildRemoved then
+                getgenv().ChestESPChildRemoved:Disconnect()
+            end
+            if getgenv().ChestESPObjects then
+                for _, data in pairs(getgenv().ChestESPObjects) do
+                    data.billboard:Destroy()
+                end
+                getgenv().ChestESPObjects = {}
+            end
+        end
+    end
+})
+
 local BossList = {
     ["15"]  = {10002, 9000002},
     ["30"]  = {10004, 9000003},
@@ -15,10 +326,9 @@ local BossList = {
 
 getgenv().MonsId = "1e27039e-2e4e-4d74-b64f-9662ae7d26c6"
 getgenv().BossLevel = "30"
-getgenv().LoopInterval = 5   -- khoảng chờ TRƯỚC KHI tìm trận mới (giữa các lượt)
+getgenv().LoopInterval = 5
 getgenv().AutoNpcBattle = false
 
-local WATCHDOG_TIMEOUT = 20  -- thời gian cố định để phát hiện trận bị treo, KHÔNG liên quan LoopInterval
 
 
 Boss:AddTextbox({
@@ -42,7 +352,7 @@ Boss:AddTextbox({
 })
 
 Boss:AddTextbox({
-    Name = "Thời gian chờ giữa các lượt tìm trận (giây)",
+    Name = "Thời gian chờ (giây)",
     Default = tostring(getgenv().LoopInterval),
     Callback = function(value)
         local n = tonumber(value)
@@ -141,7 +451,6 @@ Boss:AddToggle({
                 local entered = FindAndEnterBattle()
 
                 if not entered then
-                    -- Không vào được trận (thiếu thông tin / lỗi) -> chờ LoopInterval rồi thử lại
                     task.wait(getgenv().LoopInterval)
                     continue
                 end
@@ -164,7 +473,6 @@ Boss:AddToggle({
                 if not getgenv().AutoNpcBattle then break end
 
                 if catchCompleted then
-                    -- Trận kết thúc sớm (bắt xong ngay) -> chờ LoopInterval rồi tìm trận mới
                     task.wait(getgenv().LoopInterval)
                     continue
                 end
@@ -180,22 +488,130 @@ Boss:AddToggle({
                         task.wait(1)
                         num = tonumber(countdownText.Text)
                         if num then
-                            -- vẫn đang đếm, tiếp tục
                         else
                             break
                         end
                     end
 
-                    -- Watchdog CỐ ĐỊNH: phát hiện trận bị treo (không liên quan LoopInterval)
-                    if tick() - lastKeyActionTime >= WATCHDOG_TIMEOUT then
-                        warn("Watchdog: " .. WATCHDOG_TIMEOUT .. "s không phát hiện E/C, thoát trận")
+                    if tick() - lastKeyActionTime >= 120 then
                         break
                     end
                 end
-
-                -- Kết thúc lượt (dù bình thường hay do watchdog) -> luôn chờ LoopInterval trước khi tìm trận mới
-                task.wait(getgenv().LoopInterval)
             end
         end)
+    end
+})
+
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local plr = Players.LocalPlayer
+local Character = plr.Character or plr.CharacterAdded:Wait()
+local Humanoid = Character:WaitForChild("Humanoid")
+
+
+local WalkSpeed = 50
+local JumpPower = 50
+local isEnabled = false
+
+-- Các connection để có thể disconnect
+local walkSpeedConnection
+local jumpPowerConnection
+
+-- Hàm cập nhật Humanoid mới khi respawn
+local function updateHumanoid(char)
+    Character = char
+    Humanoid = char:WaitForChild("Humanoid")
+    
+    -- Disconnect các connection cũ nếu có
+    if walkSpeedConnection then walkSpeedConnection:Disconnect() end
+    if jumpPowerConnection then jumpPowerConnection:Disconnect() end
+    
+    -- Áp dụng giá trị nếu đang bật
+    if isEnabled then
+        Humanoid.WalkSpeed = WalkSpeed
+        Humanoid.JumpPower = JumpPower
+        
+        -- Theo dõi khi WalkSpeed hoặc JumpPower bị reset
+        walkSpeedConnection = Humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+            if Humanoid.WalkSpeed ~= WalkSpeed then
+                Humanoid.WalkSpeed = WalkSpeed
+            end
+        end)
+        
+        jumpPowerConnection = Humanoid:GetPropertyChangedSignal("JumpPower"):Connect(function()
+            if Humanoid.JumpPower ~= JumpPower then
+                Humanoid.JumpPower = JumpPower
+            end
+        end)
+    end
+end
+
+plr.CharacterAdded:Connect(updateHumanoid)
+updateHumanoid(Character)
+-- Xử lý phím P để bật/tắt
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.KeyCode == Enum.KeyCode.P then
+        isEnabled = not isEnabled
+        
+        if Humanoid then
+            if isEnabled then
+                -- Bật: áp dụng speed và jump tùy chỉnh
+                Humanoid.WalkSpeed = WalkSpeed
+                Humanoid.JumpPower = JumpPower
+                
+                -- Theo dõi khi bị reset
+                walkSpeedConnection = Humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+                    if Humanoid.WalkSpeed ~= WalkSpeed then
+                        Humanoid.WalkSpeed = WalkSpeed
+                    end
+                end)
+                
+                jumpPowerConnection = Humanoid:GetPropertyChangedSignal("JumpPower"):Connect(function()
+                    if Humanoid.JumpPower ~= JumpPower then
+                        Humanoid.JumpPower = JumpPower
+                    end
+                end)
+            else
+                -- Tắt: ngắt kết nối, để hệ thống tự áp dụng giá trị mặc định
+                if walkSpeedConnection then walkSpeedConnection:Disconnect() end
+                if jumpPowerConnection then jumpPowerConnection:Disconnect() end
+
+            end
+        end
+    end
+end)
+
+-- Khi người dùng thay đổi slider
+SpeedAndJump:AddSlider({
+    Name = "WalkSpeed",
+    Value = WalkSpeed,
+    Min = 16,
+    Max = 80,
+    Flag = "WalkSpeed",
+    Textbox = true,
+    Callback = function(state)
+        WalkSpeed = state
+        if Humanoid and isEnabled then
+            Humanoid.WalkSpeed = WalkSpeed
+        end
+    end
+})
+
+SpeedAndJump:AddSlider({
+    Name = "JumpPower",
+    Value = JumpPower,
+    Min = 50,
+    Max = 80,
+    Flag = "JumpPower",
+    Textbox = true,
+    Callback = function(state)
+        JumpPower = state
+        if Humanoid and isEnabled then
+            Humanoid.JumpPower = JumpPower
+        end
     end
 })
