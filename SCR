@@ -196,6 +196,104 @@ Settings:AddToggle({
 
 
 Settings:AddToggle({
+    Name = "Chạy riêng (E)",
+    Default = false,
+    Callback = function(value)
+        getgenv().AutoCatchE = value
+        if not value then return end
+
+        task.spawn(function()
+            local player = game:GetService("Players").LocalPlayer
+            local VirtualInputManager = game:GetService("VirtualInputManager")
+
+            local autoCatchText = player.PlayerGui
+                :WaitForChild("UIPrefabs")
+                :WaitForChild("BattleCatchPetWindow")
+                :WaitForChild("MainCanvasGroup")
+                :WaitForChild("BallFrame")
+                :WaitForChild("AutoCatchFrame")
+                :WaitForChild("AutoTimeText")
+
+            local conn
+            conn = autoCatchText:GetPropertyChangedSignal("Text"):Connect(function()
+                if not getgenv().AutoCatchE then
+                    conn:Disconnect()
+                    return
+                end
+
+                local text = autoCatchText.Text
+                if text == "(3s)" or text == "(2s)" or text == "(1s)" then
+                    task.spawn(function()
+                        while getgenv().AutoCatchE do
+                            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                            task.wait(0.5)
+                            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+                            task.wait(6)
+
+                            local currentText = autoCatchText.Text
+                            if currentText ~= "(3s)" and currentText ~= "(2s)" and currentText ~= "(1s)" then
+                                break
+                            end
+                        end
+                    end)
+                end
+            end)
+
+
+            while getgenv().AutoCatchE do
+                task.wait(1)
+            end
+            if conn then conn:Disconnect() end
+        end)
+    end
+})
+
+
+
+Settings:AddToggle({
+    Name = "Chạy riêng (C)",
+    Default = false,
+    Callback = function(value)
+        getgenv().AutoCatchC = value
+        if not value then return end
+
+        task.spawn(function()
+            local player = game:GetService("Players").LocalPlayer
+            local VirtualInputManager = game:GetService("VirtualInputManager")
+
+            local autoCatchText = player.PlayerGui
+                :WaitForChild("UIPrefabs")
+                :WaitForChild("BattleCatchPetWindow")
+                :WaitForChild("MainCanvasGroup")
+                :WaitForChild("BallFrame")
+                :WaitForChild("AutoCatchFrame")
+                :WaitForChild("AutoTimeText")
+
+            local conn
+            conn = autoCatchText:GetPropertyChangedSignal("Text"):Connect(function()
+                if not getgenv().AutoCatchC then
+                    conn:Disconnect()
+                    return
+                end
+
+                local text = autoCatchText.Text
+                if text == "(3s)" or text == "(2s)" or text == "(1s)" then
+                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.C, false, game)
+                    task.wait(0.5)
+                    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.C, false, game)
+                    task.wait(2)
+                end
+            end)
+
+            while getgenv().AutoCatchC do
+                task.wait(1)
+            end
+            if conn then conn:Disconnect() end
+        end)
+    end
+})
+
+Settings:AddToggle({
     Name = "Chest ESP",
     Default = false,
     Callback = function(value)
