@@ -142,43 +142,14 @@ MainSection:AddToggle({
 
                 catchCompleted = false
                 lastKeyActionTime = tick()
-                local countdownText = player.PlayerGui
-                    :WaitForChild("UIPrefabs")
-                    :WaitForChild("MainBattleWindow")
-                    :WaitForChild("MainCanvasGroup")
-                    :WaitForChild("TopFrame")
-                    :WaitForChild("CountdownFrame")
-                    :WaitForChild("CountdownText")
 
-                repeat task.wait(0.5) until not getgenv().AutoPetBattle
+
+                repeat task.wait(1) until not getgenv().AutoPetBattle
                     or catchCompleted
-                    or (tonumber(countdownText.Text) and tonumber(countdownText.Text) <= 29)
+					or (tick() - lastKeyActionTime >= 40)
 
                 if not getgenv().AutoPetBattle then break end
                 if catchCompleted then task.wait(2) continue end
-
-                while getgenv().AutoPetBattle and not catchCompleted do
-                    local num = tonumber(countdownText.Text)
-
-                    if num then
-                        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.One, false, game)
-                        task.wait(math.random(150, 180) / 100)
-                        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.One, false, game)
-                    else
-                        task.wait(1)
-                        num = tonumber(countdownText.Text)
-                        if num then
-
-                        else
-                            break
-                        end
-                    end
-
-
-                    if tick() - lastKeyActionTime >= 60 then
-                        break
-                    end
-                end
 
                 task.wait(1)
             end
@@ -194,6 +165,41 @@ Settings:AddToggle({
     end
 })
 
+Settings:AddToggle({
+    Name = "Auto 1",
+    Default = false,
+    Callback = function(value)
+        getgenv().AutoKeyOne = value
+        if not value then return end
+
+        task.spawn(function()
+            local player = game:GetService("Players").LocalPlayer
+            local VirtualInputManager = game:GetService("VirtualInputManager")
+
+            local countdownText = player.PlayerGui
+                :WaitForChild("UIPrefabs")
+                :WaitForChild("MainBattleWindow")
+                :WaitForChild("MainCanvasGroup")
+                :WaitForChild("TopFrame")
+                :WaitForChild("CountdownFrame")
+                :WaitForChild("CountdownText")
+
+            while getgenv().AutoKeyOne do
+
+                repeat task.wait(1) until not getgenv().AutoKeyOne
+                    or tonumber(countdownText.Text) ~= nil
+
+                while getgenv().AutoKeyOne and tonumber(countdownText.Text) ~= nil do
+                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.One, false, game)
+                    task.wait(math.random(150, 180) / 100)
+                    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.One, false, game)
+                end
+
+                task.wait(1)
+            end
+        end)
+    end
+})
 
 Settings:AddToggle({
     Name = "Chạy riêng (E)",
